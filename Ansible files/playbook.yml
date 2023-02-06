@@ -1,0 +1,58 @@
+---
+- name: Install Apache and configure Timezone
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+
+  tasks:
+  - name: update
+    apt: force_apt_get=yes
+
+  - name: Install Apache server
+    apt: name=apache2 state=present
+
+  - name: restart apache
+    systemd:
+      name: apache2
+      state: restarted
+
+  - name: Installation install software-properties-common
+    apt: name=software-properties-common
+
+  - name: install release
+    command: "apt install -y lsb-release apt-transport-https ca-certificates"
+
+  - name: "Repo PHP 8.1"
+    apt_repository: repo="ppa:ondrej/php" state=present
+
+  - name: "Updating the repo"
+    apt: force_apt_get=yes
+
+  - name: Installation PHP 8.1
+    apt: name=php8.1 state=present       
+
+  - name: Set timezone
+    timezone:
+      name: Africa/Lagos
+
+  - name: Delete present html file
+    file:
+      path: /var/www/html/index.html
+      state: absent
+
+  - name: Create PHP page
+    copy:
+      dest: /var/www/html/index.php
+      content: |
+        <?php
+        echo "<h1>the IP address is: " . $_SERVER['REMOTE_ADDR'] ."<br>";
+        echo "Timezone: " . date_default_timzone_get() . "<br>";
+        echo "This is Obioma's page y'all <br>";
+        ?>
+      owner: www-data
+      group: www-data
+      mode: 0644
+
+  - name: update
+    apt: force_apt_get=yes
